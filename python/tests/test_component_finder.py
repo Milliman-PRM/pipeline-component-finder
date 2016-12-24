@@ -35,3 +35,10 @@ def test_schema_success():
     for test_json in (PATH_TEST_CASES / 'good_releases').glob('*.json'):
         with test_json.open() as fh_test:
             component_finder.validate_release_schema(json.load(fh_test))
+
+def test_schema_failure():
+    """Test all the lovely failure cases"""
+    for test_json in (PATH_TEST_CASES / 'bad_releases').glob('*.json'):
+        with test_json.open() as fh_test:
+            with pytest.raises(jsonschema.ValidationError):
+                component_finder.validate_release_schema(json.load(fh_test))
