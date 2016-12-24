@@ -1,0 +1,9 @@
+{
+    "qrm":{
+        "primary_signer": "dudley.doright@milliman.com",
+        "peer_reviewer": "moose@milliman.com",
+        "documentation_home": "C:/UAT/Awesome_Component"
+    },
+    "url_git_repo": "http://indy-github.milliman.com/PRM/awesome",
+    "notallowed": "not so sneaky"
+}
