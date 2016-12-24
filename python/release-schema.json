@@ -27,7 +27,17 @@
                 },
                 "peer_reviewer": {
                     "description": "Peer Reviewer for this product component release.",
-                    "$ref" : "#/definitions/authorized_qrm_signers"
+                    "oneOf": [
+                        {
+                            "$ref" : "#/definitions/authorized_qrm_signers"
+                        },
+                        {
+                            "type": "string",
+                            "enum": [
+                                "Risk Level 2C - Peer Review not required"
+                            ]
+                        }
+                    ]
                 }
             },
             "additionalProperties": false,
