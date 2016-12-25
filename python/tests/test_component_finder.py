@@ -42,3 +42,9 @@ def test_schema_failure():
         with test_json.open() as fh_test:
             with pytest.raises(jsonschema.ValidationError):
                 component_finder.validate_release_schema(json.load(fh_test))
+
+def test_find_current_semver():
+    """Test our SemVer finder"""
+    assert component_finder.find_current_semver(PATH_TEST_CASES / 'semver_test') == (
+        PATH_TEST_CASES / 'semver_test' / 'v2.1.0'
+    )

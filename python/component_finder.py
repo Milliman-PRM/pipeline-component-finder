@@ -9,6 +9,7 @@
 """
 import logging
 import json
+import typing
 from pathlib import Path
 
 import jsonschema
@@ -32,3 +33,7 @@ def validate_release_schema(release) -> None:
         )
 
     return None
+
+def find_current_semver(path: Path) -> typing.Optional[Path]:
+    """Find the current release from a folder of releases"""
+    return path
