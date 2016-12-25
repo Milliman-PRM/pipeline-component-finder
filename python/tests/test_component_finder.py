@@ -43,8 +43,7 @@ def test_schema_failure():
             with pytest.raises(jsonschema.ValidationError):
                 component_finder.validate_release_schema(json.load(fh_test))
 
-def test_find_current_semver():
-    """Test our SemVer finder"""
-    assert component_finder.find_current_semver(PATH_TEST_CASES / 'semver_test') == (
-        PATH_TEST_CASES / 'semver_test' / 'v2.1.0'
-    )
+def test_find_current_release():
+    """Test our current Release finder"""
+    assert component_finder.find_current_release(PATH_TEST_CASES / 'semver_test') == \
+        component_finder.Release(PATH_TEST_CASES / 'semver_test' / 'v2.1.0')
