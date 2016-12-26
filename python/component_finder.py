@@ -127,6 +127,17 @@ class Release():
     def generate_setup_env_code(self):
         """Generate the code to setup environment variables for this component"""
         _code = []
+        _code.append('rem Component: {}    Version: {}'.format(
+            self.component_name,
+            self.version,
+        ))
+        _code.append('rem Primary Signer: {}    Peer Reviewer: {}'.format(
+            self.release_json['qrm']['primary_signer'],
+            self.release_json['qrm']['peer_reviewer'],
+        ))
+        _code.append('rem QRM Documentation: {}'.format(
+            self.release_json['qrm']['documentation_home'],
+        ))
         _code.append(
             'SET PRM_COMPONENTS=%PRM_COMPONENTS%;{}'.format(self.component_name.upper())
         )
