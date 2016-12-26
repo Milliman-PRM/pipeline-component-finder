@@ -230,6 +230,10 @@ def main(root_path: Path) -> int:
                 fh_out.write(line + '\n')
             fh_out.write('\n\n')
 
+        LOGGER.info('Adding an entry for a client specific library')
+        fh_out.write('rem Include any client-specific python libraries\n')
+        fh_out.write('SET PYTHONPATH=%PYTHONPATH%;%~dp0\\01_Programs\\python\n')
+
     LOGGER.info('Finished generating %s', name_output)
     return 0
 
