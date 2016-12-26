@@ -124,7 +124,7 @@ class Release():
         except KeyError:
             return None
 
-    def generate_setup_env_code(self, start_accumulators: bool=False) -> 'typing.List[str]':
+    def generate_setup_env_code(self, analytics_pipeline: bool=False) -> 'typing.List[str]':
         """Generate the code to setup environment variables for this component"""
         _code = []
         _code.append('rem Component: {}    Version: {}'.format(
@@ -138,7 +138,7 @@ class Release():
         _code.append('rem QRM Documentation: {}'.format(
             self.release_json['qrm']['documentation_home'],
         ))
-        if start_accumulators:
+        if analytics_pipeline:
             _code.append('SET PRM_COMPONENTS={}'.format(self.component_name.upper()))
         else:
             _code.append(
@@ -158,13 +158,9 @@ class Release():
             self.component_name.upper(),
             self.url_git_repo,
         ))
-        if start_accumulators:
-            _code.append('SET PYTHONPATH={}'.format(
-                self.path / 'python',
-            ))
-        else:
-            _code.append('SET PYTHONPATH=%PYTHONPATH%;{}'.format(
-                self.path / 'python',
+        if not analytics_pipeline: # `analytics_pipeline_env.bat` seeds %PYTHONPATH%
+            _code.append('SET PYTHONPATH=%PYTHONPATH%;%{}_HOME%python'.format(
+                self.component_name.upper(),
             ))
         if self.path_qvws_git:
             _code.append('SET {}_GIT_QVW_PATH={}{}'.format(
@@ -206,31 +202,26 @@ def main(root_path: Path) -> int:
         LOGGER.info('Found %s', release)
         components[subdir.name.lower()] = release
 
-    name_output = 'prm_env_components-{}.bat'.format(
+    name_output = 'pipeline_components_env-{}.bat'.format(
         datetime.datetime.now().strftime('%Y-%m-%d'),
     )
     LOGGER.info('Writing setup code into %s', name_output)
     with open(name_output, 'w') as fh_out:
-        fh_out.write('rem Objective: Setup comprehensive environment for PRM pipeline work\n')
-        fh_out.write('rem Auto-generated on {} by {}\n\n\n'.format(
+        fh_out.write('rem Auto-generated on {} by {}\n\n'.format(
             datetime.datetime.now(),
             os.environ['UserName'],
         ))
+        fh_out.write('rem Objective: Setup comprehensive environment for PRM pipeline work\n\n')
+        fh_out.write('rem Developer Notes:\n')
+        fh_out.write('rem   Intended to ultimately reside in a deliverable folder (i.e. next to `open_prm.bat`)\n\n\n')
 
         anal_pipe = components.pop('analytics_pipeline')
         LOGGER.info('Beginning special treatment of %s', anal_pipe)
-        fh_out.write('IF DEFINED ANALYTICS_PIPELINE_HOME (\n')
-        fh_out.write(
-            '  rem Assuming `prm_env.bat` has already been executed from an appropriate location.\n'
-        )
-        fh_out.write('  rem   It should have setup the required environment variables.\n')
-        fh_out.write(') else (\n')
-        for line in anal_pipe.generate_setup_env_code(start_accumulators=True):
-            fh_out.write('  ' + line + '\n')
-        fh_out.write('\n  rem Calling embedded `prm_env.bat`\n')
-        fh_out.write('  rem   This will likely overwrite some of the above (e.g. PYTHONPATH)\n')
-        fh_out.write('  call %ANALYTICS_PIPELINE_HOME%/prm_env.bat\n')
-        fh_out.write(')\n\n\n')
+        for line in anal_pipe.generate_setup_env_code(analytics_pipeline=True):
+            fh_out.write('' + line + '\n')
+        fh_out.write('\nrem Calling embedded `analytics_pipeline_env.bat`\n')
+        fh_out.write('rem   This will seed some accumulators (e.g. PYTHONPATH)\n')
+        fh_out.write('call %ANALYTICS_PIPELINE_HOME%analytics_pipeline_env.bat\n\n\n')
         LOGGER.info('Finished special treatment of %s', anal_pipe)
 
         for component in components.values():
