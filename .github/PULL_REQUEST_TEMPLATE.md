@@ -5,7 +5,7 @@
 ## Potential Tasks
 
   - [ ] Connects to #¿¿¿???
-  - [ ] Update user guides/release notes as needed
+  - [ ] Update internal documentation (e.g. ReadMes) as needed
   - [ ] Loop in collaborators when appropriate
   - [ ] All files have appropriate code owners documented
   - [ ] ¿¿¿???
