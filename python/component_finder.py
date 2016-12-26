@@ -13,6 +13,7 @@ import json
 import typing
 import functools
 import contextlib
+import datetime
 from pathlib import Path
 
 import jsonschema
@@ -186,6 +187,22 @@ def main(root_path: Path) -> int:
         LOGGER.info('Found %s', release)
         components[subdir.name.lower()] = release
 
+    name_output = 'prm_env_components-{}.bat'.format(
+        datetime.datetime.now().strftime('%Y-%m-%d'),
+    )
+    LOGGER.info('Writing setup code into %s', name_output)
+    with open(name_output, 'w') as fh_out:
+        fh_out.write('rem Objective: Setup comprehensive environment for PRM pipeline work\n')
+        fh_out.write('rem Auto-generated on {} by {}\n\n\n'.format(
+            datetime.datetime.now(),
+            os.environ['UserName'],
+        ))
+        for component in components.values():
+            for line in component.generate_setup_env_code():
+                fh_out.write(line + '\n')
+            fh_out.write('\n\n')
+
+    LOGGER.info('Finished generating %s', name_output)
     return 0
 
 
