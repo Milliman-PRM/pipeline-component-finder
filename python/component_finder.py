@@ -100,7 +100,7 @@ class Release():
     @property
     def component_name(self):
         """Dig out the component name from the path."""
-        return self.path.parent.name.upper()
+        return self.path.parent.name.lower()
 
     @property
     def url_git_repo(self) -> URL:
@@ -127,20 +127,20 @@ class Release():
         """Generate the code to setup environment variables for this component"""
         _code = []
         _code.append(
-            'SET PRM_COMPONENTS=%PRM_COMPONENTS%;{}'.format(self.component_name)
+            'SET PRM_COMPONENTS=%PRM_COMPONENTS%;{}'.format(self.component_name.upper())
         )
         _code.append('SET {}_HOME={}{}'.format(
-            self.component_name,
+            self.component_name.upper(),
             self.path,
             os.path.sep,
         ))
         _code.append('rem SET {}_HOME=%UserProfile%\\repos\\{}{}'.format(
-            self.component_name,
+            self.component_name.upper(),
             self.name_git_repo,
             os.path.sep,
         ))
         _code.append('SET {}_URL_GIT={}'.format(
-            self.component_name,
+            self.component_name.upper(),
             self.url_git_repo,
         ))
         _code.append('SET PYTHONPATH=%PYTHONPATH%;{}'.format(
@@ -148,7 +148,7 @@ class Release():
         ))
         if self.path_qvws_git:
             _code.append('SET {}_GIT_QVW_PATH={}{}'.format(
-                self.component_name,
+                self.component_name.upper(),
                 self.path_qvws_git,
                 os.path.sep,
             ))
