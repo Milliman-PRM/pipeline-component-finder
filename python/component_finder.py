@@ -124,7 +124,7 @@ class Release():
         except KeyError:
             return None
 
-    def generate_setup_env_code(self):
+    def generate_setup_env_code(self, start_accumulators: bool=False) -> 'typing.List[str]':
         """Generate the code to setup environment variables for this component"""
         _code = []
         _code.append('rem Component: {}    Version: {}'.format(
@@ -138,9 +138,12 @@ class Release():
         _code.append('rem QRM Documentation: {}'.format(
             self.release_json['qrm']['documentation_home'],
         ))
-        _code.append(
-            'SET PRM_COMPONENTS=%PRM_COMPONENTS%;{}'.format(self.component_name.upper())
-        )
+        if start_accumulators:
+            _code.append('SET PRM_COMPONENTS={}'.format(self.component_name.upper()))
+        else:
+            _code.append(
+                'SET PRM_COMPONENTS=%PRM_COMPONENTS%;{}'.format(self.component_name.upper())
+            )
         _code.append('SET {}_HOME={}{}'.format(
             self.component_name.upper(),
             self.path,
@@ -155,9 +158,14 @@ class Release():
             self.component_name.upper(),
             self.url_git_repo,
         ))
-        _code.append('SET PYTHONPATH=%PYTHONPATH%;{}'.format(
-            self.path / 'python',
-        ))
+        if start_accumulators:
+            _code.append('SET PYTHONPATH={}'.format(
+                self.path / 'python',
+            ))
+        else:
+            _code.append('SET PYTHONPATH=%PYTHONPATH%;{}'.format(
+                self.path / 'python',
+            ))
         if self.path_qvws_git:
             _code.append('SET {}_GIT_QVW_PATH={}{}'.format(
                 self.component_name.upper(),
@@ -208,7 +216,25 @@ def main(root_path: Path) -> int:
             datetime.datetime.now(),
             os.environ['UserName'],
         ))
+
+        anal_pipe = components.pop('analytics_pipeline')
+        LOGGER.info('Beginning special treatment of %s', anal_pipe)
+        fh_out.write('IF DEFINED ANALYTICS_PIPELINE_HOME (\n')
+        fh_out.write(
+            '  rem Assuming `prm_env.bat` has already been executed from an appropriate location.\n'
+        )
+        fh_out.write('  rem   It should have setup the required environment variables.\n')
+        fh_out.write(') else (\n')
+        for line in anal_pipe.generate_setup_env_code(start_accumulators=True):
+            fh_out.write('  ' + line + '\n')
+        fh_out.write('\n  rem Calling embedded `prm_env.bat`\n')
+        fh_out.write('  rem   This will likely overwrite some of the above (e.g. PYTHONPATH)\n')
+        fh_out.write('  call %ANALYTICS_PIPELINE_HOME%/prm_env.bat\n')
+        fh_out.write(')\n\n\n')
+        LOGGER.info('Finished special treatment of %s', anal_pipe)
+
         for component in components.values():
+            LOGGER.info('Generating setup code for %s', component)
             for line in component.generate_setup_env_code():
                 fh_out.write(line + '\n')
             fh_out.write('\n\n')
