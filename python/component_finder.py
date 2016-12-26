@@ -16,6 +16,7 @@ from pathlib import Path
 
 import jsonschema
 from semantic_version import Version
+from yarl import URL
 
 LOGGER = logging.getLogger(__name__)
 with (Path(__file__).parent / 'release-schema.json').open() as fh_schema:
@@ -34,6 +35,17 @@ def validate_release_schema(release) -> None:
             'Primary Signer and Peer Reviewer cannot both be {}'.format(
                 release['qrm']['primary_signer'],
             )
+        )
+
+    _url_git_repo = URL(release['url_git_repo'])
+    _repo_name = _url_git_repo.parts[-1]
+    if not _repo_name:
+        raise jsonschema.ValidationError(
+            '{} is likely ending with a front slash and should not'.format(_url_git_repo)
+        )
+    if 'git' in _repo_name.lower():
+        raise jsonschema.ValidationError(
+            '"git" should not be in {}'.format(_repo_name)
         )
 
     return None
