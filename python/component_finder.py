@@ -7,6 +7,7 @@
 ### DEVELOPER NOTES:
   <None>
 """
+import os
 import logging
 import json
 import typing
@@ -38,7 +39,7 @@ def validate_release_schema(release) -> None:
         )
 
     _url_git_repo = URL(release['url_git_repo'])
-    _repo_name = _url_git_repo.parts[-1]
+    _repo_name = _url_git_repo.name
     if not _repo_name:
         raise jsonschema.ValidationError(
             '{} is likely ending with a front slash and should not'.format(_url_git_repo)
@@ -61,10 +62,20 @@ class Release():
             raise ValueError('{} is not a directory')
         self.path = path
         self.version = Version(self.path.name[1:]) # Strip off leading 'v'
+        self._release_json = None # Lazily loaded for backward compatibility
 
-    def validate_release_json(self) -> None:
-        """Validate the embedded release.json"""
-        validate_release_schema(self.path / 'release.json')
+    @property
+    def release_json(self):
+        """Lazily load (and validate) the accompanying release.json"""
+        if self._release_json:
+            return self._release_json
+        else:
+            path_release_json = self.path / 'release.json'
+            assert path_release_json.is_file(), '{} does not exist'.format(path_release_json)
+            with path_release_json.open() as fh_json:
+                self._release_json = json.load(fh_json)
+            validate_release_schema(self._release_json)
+            return self._release_json
 
     def __getattr__(self, name):
         """Pass through to embedded Version class"""
@@ -84,6 +95,63 @@ class Release():
             self.path,
             self.version,
         )
+
+    @property
+    def component_name(self):
+        """Dig out the component name from the path."""
+        return self.path.parent.name.upper()
+
+    @property
+    def url_git_repo(self) -> URL:
+        """Where the code for the component likely lives"""
+        return URL(self.release_json['url_git_repo'])
+
+    @property
+    def name_git_repo(self) -> str:
+        """Get the name of the git repo for this component"""
+        return self.url_git_repo.name.lower()
+
+    @property
+    def path_qvws_git(self) -> typing.Optional[Path]:
+        """Lazily provide the path to compiled QVWs for use with checked out code"""
+        try:
+            _path_qvws_git = Path(self.release_json['path_qvws_git'])
+            # Lazily validated to keep file system coupling minimal
+            assert _path_qvws_git.is_dir(), '{} does not exist'.format(_path_qvws_git)
+            return _path_qvws_git
+        except KeyError:
+            return None
+
+    def generate_setup_env_code(self):
+        """Generate the code to setup environment variables for this component"""
+        _code = []
+        _code.append(
+            'SET PRM_COMPONENTS=%PRM_COMPONENTS%;{}'.format(self.component_name)
+        )
+        _code.append('SET {}_HOME={}{}'.format(
+            self.component_name,
+            self.path,
+            os.path.sep,
+        ))
+        _code.append('rem SET {}_HOME=%UserProfile%\\repos\\{}{}'.format(
+            self.component_name,
+            self.name_git_repo,
+            os.path.sep,
+        ))
+        _code.append('SET {}_URL_GIT={}'.format(
+            self.component_name,
+            self.url_git_repo,
+        ))
+        _code.append('SET PYTHONPATH=%PYTHONPATH%;{}'.format(
+            self.path / 'python',
+        ))
+        if self.path_qvws_git:
+            _code.append('SET {}_GIT_QVW_PATH={}{}'.format(
+                self.component_name,
+                self.path_qvws_git,
+                os.path.sep,
+            ))
+        return _code
 
 
 def find_current_release(path: Path) -> typing.Optional[Release]:
