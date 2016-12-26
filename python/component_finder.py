@@ -91,9 +91,10 @@ class Release():
 
     def __repr__(self):
         """A pretty stringifyier"""
-        return "Release(path={}, version={})".format(
-            self.path,
+        return "Release(component_name={}, version={}, path={})".format(
+            self.component_name,
             self.version,
+            self.path,
         )
 
     @property
@@ -168,3 +169,32 @@ def find_current_release(path: Path) -> typing.Optional[Release]:
         return releases[-1]
     else:
         return None
+
+
+def main(root_path: Path) -> int:
+    """Do the real work"""
+    LOGGER.info('Going to assemble a new `prm_env_components.bat`')
+
+    LOGGER.info('Scanning for product components here: %s', root_path)
+    components = {}
+    for subdir in root_path.glob('*'):
+        if not subdir.is_dir():
+            continue
+        release = find_current_release(subdir)
+        if not release:
+            continue
+        LOGGER.info('Found %s', release)
+        components[subdir.name.lower()] = release
+
+    return 0
+
+
+if __name__ == '__main__':
+    # pylint: disable=wrong-import-position, wrong-import-order
+    import sys
+    logging.basicConfig(
+        format='%(asctime)s|%(name)s|%(levelname)s|%(message)s',
+        level=logging.INFO,
+    )
+    RETURN_CODE = main(Path('S:/PRM'))
+    sys.exit(RETURN_CODE)
