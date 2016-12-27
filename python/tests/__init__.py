@@ -1,5 +1,5 @@
 """
-## CODE OWNERS: Shea Parkes
+## CODE OWNERS: Shea Parkes, Kyle Baird
 
 ### OBJECTIVE:
   Mark the root of the tests folder so py.test will discover it properly.
