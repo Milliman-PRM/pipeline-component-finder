@@ -1,3 +1,6 @@
+# Output files generated from this code
+pipeline_components_env*.bat
+
 # Python [Byte-compiled, Optimized, DLL]
 *.py[cod]
 
