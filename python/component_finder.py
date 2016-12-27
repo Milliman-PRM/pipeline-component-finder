@@ -219,9 +219,9 @@ def main(root_path: Path) -> int:
         LOGGER.info('Beginning special treatment of %s', anal_pipe)
         for line in anal_pipe.generate_setup_env_code(analytics_pipeline=True):
             fh_out.write('' + line + '\n')
-        fh_out.write('\nrem Calling embedded `analytics_pipeline_env.bat`\n')
+        fh_out.write('\nrem Calling embedded `prm_env.bat`\n')
         fh_out.write('rem   This will seed some accumulators (e.g. PYTHONPATH)\n')
-        fh_out.write('call %ANALYTICS_PIPELINE_HOME%analytics_pipeline_env.bat\n\n\n')
+        fh_out.write('call %ANALYTICS_PIPELINE_HOME%prm_env.bat\n\n\n')
         LOGGER.info('Finished special treatment of %s', anal_pipe)
 
         for component in components.values():
