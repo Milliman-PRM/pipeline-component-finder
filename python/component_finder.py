@@ -174,11 +174,12 @@ class Release():
 def find_current_release(path: Path) -> typing.Optional[Release]:
     """Find the current release from a folder of releases"""
     releases = []
-    for possible_release in path.glob('*'):
-        with contextlib.suppress(ValueError):
-            version = Release(possible_release)
-            if not version.prerelease:
-                releases.append(version)
+    with contextlib.suppress(OSError):
+        for possible_release in path.glob('*'):
+            with contextlib.suppress(ValueError):
+                version = Release(possible_release)
+                if not version.prerelease:
+                    releases.append(version)
 
     if releases:
         releases.sort()
