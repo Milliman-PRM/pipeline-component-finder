@@ -1,0 +1,66 @@
+{
+    "$schema" : "http://json-schema.org/schema#",
+    "definitions": {
+        "authorized_qrm_signers": {
+            "type": "string",
+            "enum": [
+                "shea.parkes@milliman.com",
+                "kyle.baird@milliman.com",
+                "michael.reisz@milliman.com",
+                "jason.altieri@milliman.com"
+            ]
+        }
+    },
+    "type": "object",
+    "properties": {
+        "qrm": {
+            "type": "object",
+            "properties": {
+                "documentation_home": {
+                    "type": "string",
+                    "description": "Location of QRM documentation (e.g. URL of Pull Request, Network path of docx file)",
+                    "minLength": 12
+                },
+                "primary_signer": {
+                    "description": "Primary signer for this product component release; likely one of the primary authors as well.",
+                    "$ref" : "#/definitions/authorized_qrm_signers"
+                },
+                "peer_reviewer": {
+                    "description": "Peer Reviewer for this product component release.",
+                    "oneOf": [
+                        {
+                            "$ref" : "#/definitions/authorized_qrm_signers"
+                        },
+                        {
+                            "type": "string",
+                            "enum": [
+                                "Risk Level 2C - Peer Review not required"
+                            ]
+                        }
+                    ]
+                }
+            },
+            "additionalProperties": false,
+            "required": [
+                "documentation_home",
+                "primary_signer",
+                "peer_reviewer"
+            ]
+        },
+        "url_git_repo": {
+            "type": "string",
+            "description": "URL of the git repository for this product component. (Without `.git` ending)",
+            "minLength": 12
+        },
+        "path_qvws_git": {
+            "type": "string",
+            "description": "Network path of compiled QVWs to use for development runs directly from git.",
+            "minLength": 12
+        }
+    },
+    "additionalProperties" : false,
+    "required": [
+        "qrm",
+        "url_git_repo"
+    ]
+}
