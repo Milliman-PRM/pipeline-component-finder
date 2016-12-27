@@ -6,8 +6,6 @@ rem
 rem ### DEVELOPER NOTES:
 rem   Focused on Python for now.
 
-ENABLEDELAYEDEXPANSION
-
 rem ### LIBRARIES, LOCATIONS, LITERALS, ETC. GO ABOVE HERE
 
 
