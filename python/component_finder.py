@@ -23,6 +23,7 @@ from yarl import URL
 LOGGER = logging.getLogger(__name__)
 with (Path(__file__).parent / 'release-schema.json').open() as fh_schema:
     SCHEMA_RELEASE = json.load(fh_schema)
+BATCH_LOGGER_PREFIX = 'echo %~nx0 %DATE:~-4%-%DATE:~4,2%-%DATE:~7,2% %TIME%'
 
 # =============================================================================
 # LIBRARIES, LOCATIONS, LITERALS, ETC. GO ABOVE HERE
@@ -124,9 +125,15 @@ class Release():
         except KeyError:
             return None
 
-    def generate_setup_env_code(self, analytics_pipeline: bool=False) -> 'typing.List[str]':
+    def generate_setup_env_code(self, base_env: bool=False) -> 'typing.List[str]':
         """Generate the code to setup environment variables for this component"""
         _code = []
+        _code.append(
+            '{}: Setting up environment variables for: {}'.format(
+                BATCH_LOGGER_PREFIX,
+                self.component_name.upper(),
+            )
+        )
         _code.append('rem Component: {}    Version: {}'.format(
             self.component_name,
             self.version,
@@ -138,7 +145,7 @@ class Release():
         _code.append('rem QRM Documentation: {}'.format(
             self.release_json['qrm']['documentation_home'],
         ))
-        if analytics_pipeline:
+        if base_env:
             _code.append('SET PRM_COMPONENTS={}'.format(self.component_name.upper()))
         else:
             _code.append(
@@ -158,7 +165,7 @@ class Release():
             self.component_name.upper(),
             self.url_git_repo,
         ))
-        if not analytics_pipeline: # `analytics_pipeline_env.bat` seeds %PYTHONPATH%
+        if not base_env: # `base_env.bat` seeds %PYTHONPATH%
             _code.append('SET PYTHONPATH=%PYTHONPATH%;%{}_HOME%python'.format(
                 self.component_name.upper(),
             ))
@@ -168,6 +175,12 @@ class Release():
                 self.path_qvws_git,
                 os.path.sep,
             ))
+        _code.append(
+            '{0}: {1}_HOME was set to %{1}_HOME%'.format(
+                BATCH_LOGGER_PREFIX,
+                self.component_name.upper(),
+            )
+        )
         return _code
 
 
@@ -190,7 +203,7 @@ def find_current_release(path: Path) -> typing.Optional[Release]:
 
 def main(root_path: Path) -> int:
     """Do the real work"""
-    LOGGER.info('Going to assemble a new `prm_env_components.bat`')
+    LOGGER.info('Going to assemble a new `pipeline_components_env.bat`')
 
     LOGGER.info('Scanning for product components here: %s', root_path)
     components = {}
@@ -208,22 +221,27 @@ def main(root_path: Path) -> int:
     )
     LOGGER.info('Writing setup code into %s', name_output)
     with open(name_output, 'w') as fh_out:
+        fh_out.write('@echo off\n')
         fh_out.write('rem Auto-generated on {} by {}\n\n'.format(
             datetime.datetime.now(),
             os.environ['UserName'],
         ))
         fh_out.write('rem Objective: Setup comprehensive environment for PRM pipeline work\n\n')
         fh_out.write('rem Developer Notes:\n')
-        fh_out.write('rem   Intended to ultimately reside in a deliverable folder (i.e. next to `open_prm.bat`)\n\n\n')
+        fh_out.write('rem   Intended to ultimately reside in a deliverable folder (i.e. next to `open_prm.bat`)\n\n')
 
-        anal_pipe = components.pop('analytics_pipeline')
-        LOGGER.info('Beginning special treatment of %s', anal_pipe)
-        for line in anal_pipe.generate_setup_env_code(analytics_pipeline=True):
+        fh_out.write(BATCH_LOGGER_PREFIX + ': Setting up full pipeine environment.\n')
+        fh_out.write(BATCH_LOGGER_PREFIX + ': Running from %~f0\n\n\n')
+
+        base_env_release = components.pop('base_env')
+        LOGGER.info('Beginning special treatment of %s', base_env_release)
+        for line in base_env_release.generate_setup_env_code(base_env=True):
             fh_out.write('' + line + '\n')
-        fh_out.write('\nrem Calling embedded `prm_env.bat`\n')
+        fh_out.write('\nrem Calling embedded `base_env.bat`\n')
         fh_out.write('rem   This will seed some accumulators (e.g. PYTHONPATH)\n')
-        fh_out.write('call %ANALYTICS_PIPELINE_HOME%prm_env.bat\n\n\n')
-        LOGGER.info('Finished special treatment of %s', anal_pipe)
+        fh_out.write(BATCH_LOGGER_PREFIX + ': Calling appropriate base_env.bat\n')
+        fh_out.write('call %BASE_ENV_HOME%base_env.bat\n\n\n')
+        LOGGER.info('Finished special treatment of %s', base_env_release)
 
         for component in components.values():
             LOGGER.info('Generating setup code for %s', component)
@@ -233,7 +251,9 @@ def main(root_path: Path) -> int:
 
         LOGGER.info('Adding an entry for a client specific library')
         fh_out.write('rem Include any client-specific python libraries\n')
-        fh_out.write('SET PYTHONPATH=%PYTHONPATH%;%~dp0\\01_Programs\\python\n')
+        fh_out.write(BATCH_LOGGER_PREFIX + ': Adding PythonPath entry for any client-specific python libraries\n')
+        fh_out.write('SET PYTHONPATH=%PYTHONPATH%;%~dp0\\01_Programs\\python\n\n\n')
+        fh_out.write(BATCH_LOGGER_PREFIX + ': Finished setting up full pipeine environment.\n')
 
     LOGGER.info('Finished generating %s', name_output)
     return 0
@@ -246,5 +266,5 @@ if __name__ == '__main__':
         format='%(asctime)s|%(name)s|%(levelname)s|%(message)s',
         level=logging.INFO,
     )
-    RETURN_CODE = main(Path('S:/PRM'))
+    RETURN_CODE = main(Path('s:/PRM/Pipeline_Components/'))
     sys.exit(RETURN_CODE)
