@@ -190,7 +190,7 @@ def find_current_release(path: Path) -> typing.Optional[Release]:
 
 def main(root_path: Path) -> int:
     """Do the real work"""
-    LOGGER.info('Going to assemble a new `prm_env_components.bat`')
+    LOGGER.info('Going to assemble a new `pipeline_components_env.bat`')
 
     LOGGER.info('Scanning for product components here: %s', root_path)
     components = {}
