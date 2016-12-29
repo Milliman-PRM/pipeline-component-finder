@@ -23,6 +23,7 @@ from yarl import URL
 LOGGER = logging.getLogger(__name__)
 with (Path(__file__).parent / 'release-schema.json').open() as fh_schema:
     SCHEMA_RELEASE = json.load(fh_schema)
+BATCH_LOGGER_PREFIX = 'echo %~nx0 %DATE:~-4%-%DATE:~4,2%-%DATE:~7,2% %TIME%'
 
 # =============================================================================
 # LIBRARIES, LOCATIONS, LITERALS, ETC. GO ABOVE HERE
@@ -128,7 +129,8 @@ class Release():
         """Generate the code to setup environment variables for this component"""
         _code = []
         _code.append(
-            'echo %~nx0 %DATE:~-4%-%DATE:~4,2%-%DATE:~7,2% %TIME%: Setting up environment variables for: {}'.format(
+            '{}: Setting up environment variables for: {}'.format(
+                BATCH_LOGGER_PREFIX,
                 self.component_name.upper(),
             )
         )
@@ -174,7 +176,8 @@ class Release():
                 os.path.sep,
             ))
         _code.append(
-            'echo %~nx0 %DATE:~-4%-%DATE:~4,2%-%DATE:~7,2% %TIME%: {0}_HOME was set to %{0}_HOME%'.format(
+            '{0}: {1}_HOME was set to %{1}_HOME%'.format(
+                BATCH_LOGGER_PREFIX,
                 self.component_name.upper(),
             )
         )
@@ -227,8 +230,8 @@ def main(root_path: Path) -> int:
         fh_out.write('rem Developer Notes:\n')
         fh_out.write('rem   Intended to ultimately reside in a deliverable folder (i.e. next to `open_prm.bat`)\n\n')
 
-        fh_out.write('echo %~nx0 %DATE:~-4%-%DATE:~4,2%-%DATE:~7,2% %TIME%: Setting up full pipeine environment.\n')
-        fh_out.write('echo %~nx0 %DATE:~-4%-%DATE:~4,2%-%DATE:~7,2% %TIME%: Running from %~f0\n\n\n')
+        fh_out.write(BATCH_LOGGER_PREFIX + ': Setting up full pipeine environment.\n')
+        fh_out.write(BATCH_LOGGER_PREFIX + ': Running from %~f0\n\n\n')
 
         base_env_release = components.pop('base_env')
         LOGGER.info('Beginning special treatment of %s', base_env_release)
@@ -236,7 +239,7 @@ def main(root_path: Path) -> int:
             fh_out.write('' + line + '\n')
         fh_out.write('\nrem Calling embedded `base_env.bat`\n')
         fh_out.write('rem   This will seed some accumulators (e.g. PYTHONPATH)\n')
-        fh_out.write('echo %~nx0 %DATE:~-4%-%DATE:~4,2%-%DATE:~7,2% %TIME%: Calling appropriate base_env.bat\n')
+        fh_out.write(BATCH_LOGGER_PREFIX + ': Calling appropriate base_env.bat\n')
         fh_out.write('call %BASE_ENV_HOME%base_env.bat\n\n\n')
         LOGGER.info('Finished special treatment of %s', base_env_release)
 
@@ -248,9 +251,9 @@ def main(root_path: Path) -> int:
 
         LOGGER.info('Adding an entry for a client specific library')
         fh_out.write('rem Include any client-specific python libraries\n')
-        fh_out.write('echo %~nx0 %DATE:~-4%-%DATE:~4,2%-%DATE:~7,2% %TIME%: Adding PythonPath entry for any client-specific python libraries\n')
+        fh_out.write(BATCH_LOGGER_PREFIX + ': Adding PythonPath entry for any client-specific python libraries\n')
         fh_out.write('SET PYTHONPATH=%PYTHONPATH%;%~dp0\\01_Programs\\python\n\n\n')
-        fh_out.write('echo %~nx0 %DATE:~-4%-%DATE:~4,2%-%DATE:~7,2% %TIME%: Finished setting up full pipeine environment.\n')
+        fh_out.write(BATCH_LOGGER_PREFIX + ': Finished setting up full pipeine environment.\n')
 
     LOGGER.info('Finished generating %s', name_output)
     return 0
