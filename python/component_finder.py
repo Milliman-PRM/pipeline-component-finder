@@ -124,7 +124,7 @@ class Release():
         except KeyError:
             return None
 
-    def generate_setup_env_code(self, analytics_pipeline: bool=False) -> 'typing.List[str]':
+    def generate_setup_env_code(self, base_env: bool=False) -> 'typing.List[str]':
         """Generate the code to setup environment variables for this component"""
         _code = []
         _code.append('rem Component: {}    Version: {}'.format(
@@ -138,7 +138,7 @@ class Release():
         _code.append('rem QRM Documentation: {}'.format(
             self.release_json['qrm']['documentation_home'],
         ))
-        if analytics_pipeline:
+        if base_env:
             _code.append('SET PRM_COMPONENTS={}'.format(self.component_name.upper()))
         else:
             _code.append(
@@ -158,7 +158,7 @@ class Release():
             self.component_name.upper(),
             self.url_git_repo,
         ))
-        if not analytics_pipeline: # `analytics_pipeline_env.bat` seeds %PYTHONPATH%
+        if not base_env: # `base_env.bat` seeds %PYTHONPATH%
             _code.append('SET PYTHONPATH=%PYTHONPATH%;%{}_HOME%python'.format(
                 self.component_name.upper(),
             ))
@@ -216,14 +216,14 @@ def main(root_path: Path) -> int:
         fh_out.write('rem Developer Notes:\n')
         fh_out.write('rem   Intended to ultimately reside in a deliverable folder (i.e. next to `open_prm.bat`)\n\n\n')
 
-        anal_pipe = components.pop('analytics_pipeline')
-        LOGGER.info('Beginning special treatment of %s', anal_pipe)
-        for line in anal_pipe.generate_setup_env_code(analytics_pipeline=True):
+        base_env_release = components.pop('base_env')
+        LOGGER.info('Beginning special treatment of %s', base_env_release)
+        for line in base_env_release.generate_setup_env_code(base_env=True):
             fh_out.write('' + line + '\n')
-        fh_out.write('\nrem Calling embedded `prm_env.bat`\n')
+        fh_out.write('\nrem Calling embedded `base_env.bat`\n')
         fh_out.write('rem   This will seed some accumulators (e.g. PYTHONPATH)\n')
-        fh_out.write('call %ANALYTICS_PIPELINE_HOME%prm_env.bat\n\n\n')
-        LOGGER.info('Finished special treatment of %s', anal_pipe)
+        fh_out.write('call %BASE_ENV_HOME%base_env.bat\n\n\n')
+        LOGGER.info('Finished special treatment of %s', base_env_release)
 
         for component in components.values():
             LOGGER.info('Generating setup code for %s', component)
