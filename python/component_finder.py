@@ -246,5 +246,5 @@ if __name__ == '__main__':
         format='%(asctime)s|%(name)s|%(levelname)s|%(message)s',
         level=logging.INFO,
     )
-    RETURN_CODE = main(Path('S:/PRM'))
+    RETURN_CODE = main(Path('s:/PRM/Pipeline_Components/'))
     sys.exit(RETURN_CODE)
