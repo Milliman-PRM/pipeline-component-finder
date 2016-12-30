@@ -17,6 +17,6 @@ echo %~nx0 %DATE:~-4%-%DATE:~4,2%-%DATE:~7,2% %TIME%: Dogfooding prior outputs t
 call S:\PRM\Pipeline_Components_Env\pipeline_components_env.bat
 
 echo %~nx0 %DATE:~-4%-%DATE:~4,2%-%DATE:~7,2% %TIME%: Explicitly adding this repository to PythonPath
-set PYTHONPATH=%~dp0/python
+set PYTHONPATH=%~dp0/python;%PYTHONPATH%
 
 echo %~nx0 %DATE:~-4%-%DATE:~4,2%-%DATE:~7,2% %TIME%: Finished setting up environment for usage/testing
