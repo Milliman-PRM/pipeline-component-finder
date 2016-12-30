@@ -1,6 +1,8 @@
-# PRM Component Finder
+# PRM Pipeline_Component_Env
 
-A repository for tooling that helps bring the various PRM product components together.
+A repository for tooling that helps bring the various PRM pipeline components together.
+
+Specifically, it aids in finding the current version of all pipeline components and compiling that information into a fresh copy of `pipeline_components_env.bat`
 
 ### Development Guidelines
 
