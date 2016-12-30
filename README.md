@@ -1,4 +1,4 @@
-# PRM Pipeline_Component_Env
+# PRM Pipeline_Components_Env
 
 A repository for tooling that helps bring the various PRM pipeline components together.
 
