@@ -1,4 +1,4 @@
-# PRM Pipeline_Components_Env
+# PRM Pipeline Component Finder
 
 A repository for tooling that helps bring the various PRM pipeline components together.
 
