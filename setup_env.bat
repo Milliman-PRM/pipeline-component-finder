@@ -5,7 +5,7 @@ rem ### OBJECTIVE:
 rem   Setup the environment.
 rem
 rem ### DEVELOPER NOTES:
-rem   Focused on Python for now.
+rem   Dogfoods prior results to keep it simple (and current).
 
 echo %~nx0 %DATE:~-4%-%DATE:~4,2%-%DATE:~7,2% %TIME%: Setting up environment for usage/testing
 echo %~nx0 %DATE:~-4%-%DATE:~4,2%-%DATE:~7,2% %TIME%: Running from %~f0
