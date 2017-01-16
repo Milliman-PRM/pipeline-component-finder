@@ -201,20 +201,25 @@ def find_current_release(path: Path) -> typing.Optional[Release]:
         return None
 
 
-def main(root_path: Path) -> int:
+def main(root_paths: typing.List[Path]) -> int:
     """Do the real work"""
     LOGGER.info('Going to assemble a new `pipeline_components_env.bat`')
 
-    LOGGER.info('Scanning for product components here: %s', root_path)
     components = {}
-    for subdir in root_path.glob('*'):
-        if not subdir.is_dir():
-            continue
-        release = find_current_release(subdir)
-        if not release:
-            continue
-        LOGGER.info('Found %s', release)
-        components[subdir.name.lower()] = release
+    for root_path in root_paths:
+        LOGGER.info('Scanning for product components here: %s', root_path)
+        release = find_current_release(root_path)
+        if release:
+            LOGGER.info('Found %s', release)
+            components[root_path.name.lower()] = release
+        for subdir in root_path.glob('*'):
+            if not subdir.is_dir():
+                continue
+            release = find_current_release(subdir)
+            if not release:
+                continue
+            LOGGER.info('Found %s', release)
+            components[subdir.name.lower()] = release
 
     name_output = 'pipeline_components_env-{}.bat'.format(
         datetime.datetime.now().strftime('%Y-%m-%d'),
@@ -266,5 +271,8 @@ if __name__ == '__main__':
         format='%(asctime)s|%(name)s|%(levelname)s|%(message)s',
         level=logging.INFO,
     )
-    RETURN_CODE = main(Path('s:/PRM/Pipeline_Components/'))
+    RETURN_CODE = main([
+        Path('s:/PRM/Pipeline_Components/'),
+        Path('s:/IndyHealth_Library/'),
+    ])
     sys.exit(RETURN_CODE)
