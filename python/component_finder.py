@@ -63,7 +63,7 @@ class Release():
         if not path.is_dir():
             raise ValueError('{} is not a directory')
         self.path = path
-        self.version = Version(self.path.name[1:]) # Strip off leading 'v'
+        self.version = Version(self.path.name.strip('v'))
         self._release_json = None # Lazily loaded for backward compatibility
 
     @property
