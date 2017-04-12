@@ -12,9 +12,18 @@ This repository will follow [GitHub Flow](https://guides.github.com/introduction
 
 ## Usage / Result Promotion
 
-For now, the intention is to manually run the component finder and copy the results to the network.  Current promotion home is `S:\PRM\Pipeline_Components_Env\`
+This pipeline component finder needs to be manually executed.  It should be ran after promoting a new release of any pipeline component.  Only staff with appropriate network access (to the promotion location below) can promote the results of this tool.
 
-For example:
+The pipeline component finder will validate each release of each pipeline component.  In particular, it will confirm:
+  - The pipeline component was promoted into an appropriate folder under `S:\PRM\Pipeline_Components\`
+  - A valid semantic version was utilized
+  - A `release.json` was included in each release.  It must contain specific documentation of release peer review and the contents will be validated against the embedded `python\release-schema.json` file from this repository.
+
+If there are any documentation or folder structure issues, the pipeline component finder will fail with a hopefully helpful message.
+
+After successful execution, the new `pipeline_components_env.bat` should be promoted to `S:\PRM\Pipeline_Components_Env\`.  New production runs will cache the latest version of `pipeline_components_env.bat` from there (so existing production runs will not be disrupted).
+
+Here is a complete example of running the pipeline component finder and promoting its output:
 
 ```bat
 setup_env.bat
