@@ -258,6 +258,15 @@ def main(root_paths: typing.List[Path]) -> int:
         fh_out.write('rem Include any client-specific python libraries\n')
         fh_out.write(BATCH_LOGGER_PREFIX + ': Adding PythonPath entry for any client-specific python libraries\n')
         fh_out.write('SET PYTHONPATH=%PYTHONPATH%;%~dp0\\01_Programs\\python\n\n\n')
+
+        LOGGER.info('Adding an entry for any client-specific environment scripts')
+        fh_out.write('rem Include any client-specific environment definitions\n')
+        fh_out.write(BATCH_LOGGER_PREFIX + ': Running any client-specific environment scripts\n')
+        fh_out.write('if exist "%~dp0\\01_Programs\\client_env.bat" (\n')
+        fh_out.write('  call "%~dp0\\01_Programs\\client_env.bat" (\n')
+        fh_out.write(')\n')
+        fh_out.write(BATCH_LOGGER_PREFIX + ': Finished running any client-specific environment scripts.\n\n\n')
+
         fh_out.write(BATCH_LOGGER_PREFIX + ': Finished setting up full pipeline environment.\n')
 
     LOGGER.info('Finished generating %s', name_output)
