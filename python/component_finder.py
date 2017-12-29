@@ -152,16 +152,43 @@ class Release():
             _code.append(
                 'SET PRM_COMPONENTS=%PRM_COMPONENTS%;{}'.format(self.component_name.upper())
             )
-        _code.append('SET {}_HOME={}{}'.format(
+        _code.append('IF %{}_FROMGIT% EQU FALSE ('.format(self.component_name.upper()))
+        _code.append('  SET {}_HOME={}{}'.format(
             self.component_name.upper(),
             self.path,
             os.path.sep,
         ))
-        _code.append('rem SET {}_HOME=%UserProfile%\\repos\\{}{}'.format(
+        _code.append('  SET {}_VERSION={}'.format(
+            self.component_name.upper(),
+            self.version,
+        ))
+        _code.append(') ELSE (')
+        _code.append('  SET {}_HOME=%UserProfile%\\repos\\{}{}'.format(
             self.component_name.upper(),
             self.name_git_repo,
             os.path.sep,
         ))
+        _code.append('  SET {}_VERSION=git'.format(
+            self.component_name.upper(),
+        ))
+        _code.append(')')
+        _code.append('IF %{}_FROMGIT% EQU FALSE ('.format(self.component_name.upper()))
+        _code.append('  SET {}_PATHREF=%{}_HOME%_compiled_reference_data{}'.format(
+            self.component_name.upper(),
+            self.component_name.upper(),
+            os.path.sep,
+        ))
+        _code.append(') ELSE (')
+        _code.append('  IF %_PRM_INTEGRATION_TESTING_SETUP_REFDATA% EQU TRUE (')
+        _code.append('    SET {}_PATHREF=%_PRM_INTEGRATION_TESTING_DATA_DRIVE%%_PATH_PIPELINE_COMPONENTS_ENV:~1%{}_testing_refdata{}{}{}'.format(
+            self.component_name.upper(),
+            os.path.sep,
+            os.path.sep,
+            self.component_name.upper(),
+            os.path.sep,
+        ))
+        _code.append('  )')
+        _code.append(')')
         _code.append('SET {}_URL_GIT={}'.format(
             self.component_name.upper(),
             self.url_git_repo,
@@ -241,22 +268,27 @@ def main(root_paths: typing.List[Path]) -> int:
         fh_out.write('rem Objective: Setup comprehensive environment for PRM pipeline work\n\n')
         fh_out.write('rem Developer Notes:\n')
         fh_out.write('rem   Normally intended to ultimately reside in a deliverable folder (i.e. next to `open_prm.bat`)\n')
-        fh_out.write('rem   However, sometimes this will be called directly from its promoted location.\n\n\n')
+        fh_out.write('rem   However, sometimes this will be called directly from its promoted location.\n')
+        fh_out.write('rem   Many duplicate IF blocks exist below because we cannot EnableDelayedExpansion.\n\n\n')
 
+        fh_out.write('rem #########################\n')
         fh_out.write('rem #### Testing Toggles ####\n')
-        fh_out.write('rem Make edits here to enable integration tests\n')
+        fh_out.write('rem #########################\n')
+        fh_out.write('rem   Make edits here to enable integration tests\n\n')
         fh_out.write('SET _PRM_INTEGRATION_TESTING_DATA_DRIVE=K\n')
         fh_out.write('SET _PATH_PIPELINE_COMPONENTS_ENV=%~dp0%\n')
-        fh_out.write('IF %_PATH_PIPELINE_COMPONENTS_ENV:~0,6% EQU S:\PHI (\n')
+        fh_out.write('IF %_PATH_PIPELINE_COMPONENTS_ENV:~3,3% EQU PHI (\n')
         fh_out.write('  SET _PRM_INTEGRATION_TESTING_SETUP_REFDATA=TRUE\n')
         fh_out.write(') else (\n')
         fh_out.write('  SET _PRM_INTEGRATION_TESTING_SETUP_REFDATA=FALSE\n')
-        fh_out.write(')\n')
+        fh_out.write(')\n\n')
         for component in components_ordered.values():
             fh_out.write('SET {}_FROMGIT=FALSE\n'.format(
                 component.component_name.upper(),
             ))
-        fh_out.write('rem #### Testing Toggles ####\n\n\n')
+        fh_out.write('\nrem #########################\n')
+        fh_out.write('rem #### Testing Toggles ####\n')
+        fh_out.write('rem #########################\n\n\n')
 
 
         fh_out.write(BATCH_LOGGER_PREFIX + ': Setting up full pipeline environment.\n')
