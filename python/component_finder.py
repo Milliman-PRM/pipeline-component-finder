@@ -14,6 +14,7 @@ import typing
 import functools
 import contextlib
 import datetime
+import collections
 from pathlib import Path
 
 import jsonschema
@@ -221,6 +222,12 @@ def main(root_paths: typing.List[Path]) -> int:
             LOGGER.info('Found %s', release)
             components[subdir.name.lower()] = release
 
+    components_ordered = collections.OrderedDict(sorted(
+        components.items(),
+        key=lambda item: item[0],
+    ))
+    components_ordered.move_to_end('base_env', last=False)
+
     name_output = 'pipeline_components_env-{}.bat'.format(
         datetime.datetime.now().strftime('%Y-%m-%d'),
     )
@@ -239,7 +246,7 @@ def main(root_paths: typing.List[Path]) -> int:
         fh_out.write(BATCH_LOGGER_PREFIX + ': Setting up full pipeline environment.\n')
         fh_out.write(BATCH_LOGGER_PREFIX + ': Running from %~f0\n\n\n')
 
-        base_env_release = components.pop('base_env')
+        base_env_release = components_ordered.pop('base_env')
         LOGGER.info('Beginning special treatment of %s', base_env_release)
         for line in base_env_release.generate_setup_env_code(base_env=True):
             fh_out.write('' + line + '\n')
@@ -249,7 +256,7 @@ def main(root_paths: typing.List[Path]) -> int:
         fh_out.write('call %BASE_ENV_HOME%base_env.bat\n\n\n')
         LOGGER.info('Finished special treatment of %s', base_env_release)
 
-        for component in components.values():
+        for component in components_ordered.values():
             LOGGER.info('Generating setup code for %s', component)
             for line in component.generate_setup_env_code():
                 fh_out.write(line + '\n')
