@@ -246,7 +246,12 @@ def main(root_paths: typing.List[Path]) -> int:
         fh_out.write('rem #### Testing Toggles ####\n')
         fh_out.write('rem Make edits here to enable integration tests\n')
         fh_out.write('SET _PRM_INTEGRATION_TESTING_DATA_DRIVE=K\n')
-        fh_out.write('SET _PRM_INTEGRATION_TESTING_PROJECT_ROOT=S:\PHI\n')
+        fh_out.write('SET _PATH_PIPELINE_COMPONENTS_ENV=%~dp0%\n')
+        fh_out.write('IF %_PATH_PIPELINE_COMPONENTS_ENV:~0,6% EQU S:\PHI (\n')
+        fh_out.write('  SET _PRM_INTEGRATION_TESTING_SETUP_REFDATA=TRUE\n')
+        fh_out.write(') else (\n')
+        fh_out.write('  SET _PRM_INTEGRATION_TESTING_SETUP_REFDATA=FALSE\n')
+        fh_out.write(')\n')
         for component in components_ordered.values():
             fh_out.write('SET {}_FROMGIT=FALSE\n'.format(
                 component.component_name.upper(),
