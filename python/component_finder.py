@@ -233,7 +233,8 @@ def main(root_paths: typing.List[Path]) -> int:
         ))
         fh_out.write('rem Objective: Setup comprehensive environment for PRM pipeline work\n\n')
         fh_out.write('rem Developer Notes:\n')
-        fh_out.write('rem   Intended to ultimately reside in a deliverable folder (i.e. next to `open_prm.bat`)\n\n')
+        fh_out.write('rem   Normally intended to ultimately reside in a deliverable folder (i.e. next to `open_prm.bat`)\n')
+        fh_out.write('rem   However, sometimes this will be called directly from its promoted location.\n\n')
 
         fh_out.write(BATCH_LOGGER_PREFIX + ': Setting up full pipeline environment.\n')
         fh_out.write(BATCH_LOGGER_PREFIX + ': Running from %~f0\n\n\n')
