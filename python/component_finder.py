@@ -7,6 +7,7 @@
 ### DEVELOPER NOTES:
   <None>
 """
+# pylint: disable=line-too-long
 import os
 import logging
 import json
