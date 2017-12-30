@@ -154,14 +154,10 @@ class Release():
                 'SET PRM_COMPONENTS=%PRM_COMPONENTS%;{}'.format(self.component_name.upper())
             )
         _code.append('IF %{}_FROMGIT% EQU FALSE ('.format(self.component_name.upper()))
-        _code.append('  SET {}_HOME={}{}'.format(
+        _code.append('  SET {0}_HOME={1}{2}%{0}_VERSION%{2}'.format(
             self.component_name.upper(),
-            self.path,
+            self.path.parent,
             os.path.sep,
-        ))
-        _code.append('  SET {}_VERSION={}'.format(
-            self.component_name.upper(),
-            self.version,
         ))
         _code.append(') ELSE (')
         _code.append('  SET {}_HOME=%UserProfile%\\repos\\{}{}'.format(
@@ -297,21 +293,32 @@ def main(root_paths: typing.List[Path]) -> int:
         fh_out.write('rem   Subroutines exist below because project paths may have parentheses.\n\n\n')
 
         fh_out.write('rem #########################\n')
-        fh_out.write('rem #### Testing Toggles ####\n')
+        fh_out.write('rem #### Version Toggles ####\n')
+        fh_out.write('rem   Make edits here to change component versions\n\n')
+        for component in components_ordered.values():
+            fh_out.write('SET {}_VERSION={}\n'.format(
+                component.component_name.upper(),
+                component.path.name,
+            ))
+        fh_out.write('\nrem #### \\Version Toggles ###\n')
+        fh_out.write('rem #########################\n\n\n')
+
         fh_out.write('rem #########################\n')
-        fh_out.write('rem   Make edits here to enable integration tests\n\n')
+        fh_out.write('rem #### Testing Toggles ####\n')
+        fh_out.write('rem   Make edits here to enable integration tests\n')
+        fh_out.write('rem   Enabling any of these will supercede the version choice above\n\n')
         for component in components_ordered.values():
             fh_out.write('SET {}_FROMGIT=FALSE\n'.format(
                 component.component_name.upper(),
             ))
-        fh_out.write('\nSET _PRM_INTEGRATION_TESTING_DATA_DRIVE=K\n')
+        fh_out.write('\nrem ## This block guides reference data locations during integration tests\n')
+        fh_out.write('SET _PRM_INTEGRATION_TESTING_DATA_DRIVE=K\n')
         fh_out.write('SET _PATH_PIPELINE_COMPONENTS_ENV=%~dp0%\n')
         fh_out.write('IF %_PATH_PIPELINE_COMPONENTS_ENV:~3,3% EQU PHI (\n')
         fh_out.write('  SET _PRM_INTEGRATION_TESTING_SETUP_REFDATA=TRUE\n')
         fh_out.write(') else (\n')
         fh_out.write('  SET _PRM_INTEGRATION_TESTING_SETUP_REFDATA=FALSE\n')
         fh_out.write(')\n\n')
-        fh_out.write('rem #########################\n')
         fh_out.write('rem #### \\Testing Toggles ###\n')
         fh_out.write('rem #########################\n\n\n')
 
