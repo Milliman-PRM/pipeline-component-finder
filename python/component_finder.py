@@ -136,7 +136,7 @@ class Release():
                 self.component_name.upper(),
             )
         )
-        _code.append('rem Component: {}    Version: {}'.format(
+        _code.append('rem Component: {}    Current Version: {}'.format(
             self.component_name,
             self.version,
         ))
