@@ -178,14 +178,7 @@ class Release():
             ))
             _code.append(') ELSE (')
             _code.append('  IF %_PRM_INTEGRATION_TESTING_SETUP_REFDATA% EQU TRUE (')
-            _code.append('    CALL :{}_PATHREF_GIT_DEFINE'.format(self.component_name.upper()))
-            _code.append('  )')
-            _code.append(')')
-            _code.append('IF %{}_FROMGIT% EQU TRUE ('.format(self.component_name.upper()))
-            _code.append('  IF %_PRM_INTEGRATION_TESTING_SETUP_REFDATA% EQU TRUE (')
-            _code.append('    IF NOT EXIST "%{}_PATHREF%" ('.format(self.component_name.upper()))
-            _code.append('      CALL :{}_PATHREF_GIT_CREATE'.format(self.component_name.upper()))
-            _code.append('    )')
+            _code.append('    CALL :{}_PATHREF_GIT_SETUP'.format(self.component_name.upper()))
             _code.append('  )')
             _code.append(')')
 
@@ -214,11 +207,14 @@ class Release():
     def generate_subroutines(self) -> 'typing.List[str]':
         """Generate the subroutines needed to deal with scoping and escaping"""
         _code = []
-        _code.append(':{}_PATHREF_GIT_DEFINE'.format(self.component_name.upper()))
+        _code.append(':{}_PATHREF_GIT_SETUP'.format(self.component_name.upper()))
         _code.append('SET {0}_PATHREF=%_PRM_INTEGRATION_TESTING_DATA_DRIVE%%_PATH_PIPELINE_COMPONENTS_ENV:~1%{1}_testing_refdata{1}{0}{1}'.format(
             self.component_name.upper(),
             os.path.sep,
         ))
+        _code.append('IF NOT EXIST "%{}_PATHREF%" ('.format(self.component_name.upper()))
+        _code.append('  CALL :{}_PATHREF_GIT_CREATE'.format(self.component_name.upper()))
+        _code.append(')')
         _code.append('GOTO :eof')
         _code.append('')
         _code.append(':{}_PATHREF_GIT_CREATE'.format(self.component_name.upper()))
@@ -226,7 +222,7 @@ class Release():
             BATCH_LOGGER_PREFIX,
             self.component_name.upper(),
         ))
-        _code.append('MKDIR %{}_PATHREF%'.format(self.component_name.upper()))
+        _code.append('MKDIR "%{}_PATHREF%"'.format(self.component_name.upper()))
         _code.append('GOTO :eof')
 
         return _code
