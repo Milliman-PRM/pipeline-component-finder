@@ -1,5 +1,5 @@
 """
-### CODE OWNERS: Shea Parkes, Kyle Baird
+### CODE OWNERS: Shea Parkes, Kyle Baird, Ben Copeland
 
 ### OBJECTIVE:
   Library code to aid in finding product components.
@@ -7,6 +7,7 @@
 ### DEVELOPER NOTES:
   <None>
 """
+# pylint: disable=line-too-long
 import os
 import logging
 import json
@@ -14,6 +15,7 @@ import typing
 import functools
 import contextlib
 import datetime
+import collections
 from pathlib import Path
 
 import jsonschema
@@ -134,7 +136,7 @@ class Release():
                 self.component_name.upper(),
             )
         )
-        _code.append('rem Component: {}    Version: {}'.format(
+        _code.append('rem Component: {}    Current Version: {}'.format(
             self.component_name,
             self.version,
         ))
@@ -151,16 +153,35 @@ class Release():
             _code.append(
                 'SET PRM_COMPONENTS=%PRM_COMPONENTS%;{}'.format(self.component_name.upper())
             )
-        _code.append('SET {}_HOME={}{}'.format(
+        _code.append('IF %{}_FROMGIT% EQU FALSE ('.format(self.component_name.upper()))
+        _code.append('  SET {0}_HOME={1}{2}%{0}_VERSION%{2}'.format(
             self.component_name.upper(),
-            self.path,
+            self.path.parent,
             os.path.sep,
         ))
-        _code.append('rem SET {}_HOME=%UserProfile%\\repos\\{}{}'.format(
+        _code.append(') ELSE (')
+        _code.append('  SET {}_HOME=%UserProfile%\\repos\\{}{}'.format(
             self.component_name.upper(),
             self.name_git_repo,
             os.path.sep,
         ))
+        _code.append('  SET {}_VERSION=git'.format(
+            self.component_name.upper(),
+        ))
+        _code.append(')')
+
+        if not base_env:
+            _code.append('IF %{}_FROMGIT% EQU FALSE ('.format(self.component_name.upper()))
+            _code.append('  SET {0}_PATHREF=%{0}_HOME%_compiled_reference_data{1}'.format(
+                self.component_name.upper(),
+                os.path.sep,
+            ))
+            _code.append(') ELSE (')
+            _code.append('  IF %_PRM_INTEGRATION_TESTING_SETUP_REFDATA% EQU TRUE (')
+            _code.append('    CALL :{}_PATHREF_GIT_SETUP'.format(self.component_name.upper()))
+            _code.append('  )')
+            _code.append(')')
+
         _code.append('SET {}_URL_GIT={}'.format(
             self.component_name.upper(),
             self.url_git_repo,
@@ -181,6 +202,29 @@ class Release():
                 self.component_name.upper(),
             )
         )
+        return _code
+
+    def generate_subroutines(self) -> 'typing.List[str]':
+        """Generate the subroutines needed to deal with scoping and escaping"""
+        _code = []
+        _code.append(':{}_PATHREF_GIT_SETUP'.format(self.component_name.upper()))
+        _code.append('SET {0}_PATHREF=%_PRM_INTEGRATION_TESTING_DATA_DRIVE%%_PATH_PIPELINE_COMPONENTS_ENV:~1%{1}_testing_refdata{1}{0}{1}'.format(
+            self.component_name.upper(),
+            os.path.sep,
+        ))
+        _code.append('IF NOT EXIST "%{}_PATHREF%" ('.format(self.component_name.upper()))
+        _code.append('  CALL :{}_PATHREF_GIT_CREATE'.format(self.component_name.upper()))
+        _code.append(')')
+        _code.append('GOTO :eof')
+        _code.append('')
+        _code.append(':{}_PATHREF_GIT_CREATE'.format(self.component_name.upper()))
+        _code.append('{0}: Creating new folder for {1}_PATHREF=%{1}_PATHREF%'.format(
+            BATCH_LOGGER_PREFIX,
+            self.component_name.upper(),
+        ))
+        _code.append('MKDIR "%{}_PATHREF%"'.format(self.component_name.upper()))
+        _code.append('GOTO :eof')
+
         return _code
 
 
@@ -221,6 +265,12 @@ def main(root_paths: typing.List[Path]) -> int:
             LOGGER.info('Found %s', release)
             components[subdir.name.lower()] = release
 
+    components_ordered = collections.OrderedDict(sorted(
+        components.items(),
+        key=lambda item: item[0],
+    ))
+    components_ordered.move_to_end('base_env', last=False)
+
     name_output = 'pipeline_components_env-{}.bat'.format(
         datetime.datetime.now().strftime('%Y-%m-%d'),
     )
@@ -233,12 +283,46 @@ def main(root_paths: typing.List[Path]) -> int:
         ))
         fh_out.write('rem Objective: Setup comprehensive environment for PRM pipeline work\n\n')
         fh_out.write('rem Developer Notes:\n')
-        fh_out.write('rem   Intended to ultimately reside in a deliverable folder (i.e. next to `open_prm.bat`)\n\n')
+        fh_out.write('rem   Normally intended to ultimately reside in a deliverable folder (i.e. next to `open_prm.bat`)\n')
+        fh_out.write('rem   However, sometimes this will be called directly from its promoted location.\n')
+        fh_out.write('rem   Many duplicate IF blocks exist below because we cannot EnableDelayedExpansion.\n')
+        fh_out.write('rem   Subroutines exist below because project paths may have parentheses.\n\n\n')
+
+        fh_out.write('rem #########################\n')
+        fh_out.write('rem #### Version Toggles ####\n')
+        fh_out.write('rem   Make edits here to change component versions\n\n')
+        for component in components_ordered.values():
+            fh_out.write('SET {}_VERSION={}\n'.format(
+                component.component_name.upper(),
+                component.path.name,
+            ))
+        fh_out.write('\nrem #### \\Version Toggles ###\n')
+        fh_out.write('rem #########################\n\n\n')
+
+        fh_out.write('rem #########################\n')
+        fh_out.write('rem #### Testing Toggles ####\n')
+        fh_out.write('rem   Make edits here to enable integration tests\n')
+        fh_out.write('rem   Enabling any of these will supercede the version choice above\n\n')
+        for component in components_ordered.values():
+            fh_out.write('SET {}_FROMGIT=FALSE\n'.format(
+                component.component_name.upper(),
+            ))
+        fh_out.write('\nrem ## This block guides reference data locations during integration tests\n')
+        fh_out.write('SET _PRM_INTEGRATION_TESTING_DATA_DRIVE=K\n')
+        fh_out.write('SET _PATH_PIPELINE_COMPONENTS_ENV=%~dp0%\n')
+        fh_out.write('IF %_PATH_PIPELINE_COMPONENTS_ENV:~3,3% EQU PHI (\n')
+        fh_out.write('  SET _PRM_INTEGRATION_TESTING_SETUP_REFDATA=TRUE\n')
+        fh_out.write(') else (\n')
+        fh_out.write('  SET _PRM_INTEGRATION_TESTING_SETUP_REFDATA=FALSE\n')
+        fh_out.write(')\n\n')
+        fh_out.write('rem #### \\Testing Toggles ###\n')
+        fh_out.write('rem #########################\n\n\n')
+
 
         fh_out.write(BATCH_LOGGER_PREFIX + ': Setting up full pipeline environment.\n')
         fh_out.write(BATCH_LOGGER_PREFIX + ': Running from %~f0\n\n\n')
 
-        base_env_release = components.pop('base_env')
+        base_env_release = components_ordered.pop('base_env')
         LOGGER.info('Beginning special treatment of %s', base_env_release)
         for line in base_env_release.generate_setup_env_code(base_env=True):
             fh_out.write('' + line + '\n')
@@ -248,7 +332,7 @@ def main(root_paths: typing.List[Path]) -> int:
         fh_out.write('call %BASE_ENV_HOME%base_env.bat\n\n\n')
         LOGGER.info('Finished special treatment of %s', base_env_release)
 
-        for component in components.values():
+        for component in components_ordered.values():
             LOGGER.info('Generating setup code for %s', component)
             for line in component.generate_setup_env_code():
                 fh_out.write(line + '\n')
@@ -267,7 +351,15 @@ def main(root_paths: typing.List[Path]) -> int:
         fh_out.write(')\n')
         fh_out.write(BATCH_LOGGER_PREFIX + ': Finished running any client-specific environment scripts.\n\n\n')
 
-        fh_out.write(BATCH_LOGGER_PREFIX + ': Finished setting up full pipeline environment.\n')
+        fh_out.write(BATCH_LOGGER_PREFIX + ': Finished setting up full pipeline environment.\n\n')
+        fh_out.write('GOTO :eof\n\n\n')
+
+        fh_out.write('rem Define component-specific subroutines for scoping purposes\n\n')
+        for component in components_ordered.values():
+            LOGGER.info('Generating subroutines for %s', component)
+            for line in component.generate_subroutines():
+                fh_out.write(line + '\n')
+            fh_out.write('\n\n')
 
     LOGGER.info('Finished generating %s', name_output)
     return 0
