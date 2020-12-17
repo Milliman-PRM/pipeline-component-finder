@@ -1,0 +1,9 @@
+{
+    "qrm":{
+        "primary_signer": "Cloud First Release - Find Primary Signer in QRM documentation home",
+        "peer_reviewer": "Cloud First Release - Find Peer Reviewer in QRM documentation home",
+        "documentation_home": "C:/UAT/Awesome_Component"
+    },
+    "url_git_repo": "http://indy-github.milliman.com/PRM/awesome",
+    "explicit_python_subfolder": false
+}

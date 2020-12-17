@@ -127,6 +127,14 @@ class Release():
         except KeyError:
             return None
 
+    @property
+    def explicit_python_subfolder(self) -> bool:
+        """Does the release include an explicit python subfolder"""
+        try:
+            return self.release_json['explicit_python_subfolder']
+        except KeyError:
+            return True
+
     def generate_setup_env_code(self, base_env: bool=False) -> 'typing.List[str]':
         """Generate the code to setup environment variables for this component"""
         _code = []
@@ -187,8 +195,9 @@ class Release():
             self.url_git_repo,
         ))
         if not base_env: # `base_env.bat` seeds %PYTHONPATH%
-            _code.append('SET PYTHONPATH=%PYTHONPATH%;%{}_HOME%python'.format(
+            _code.append('SET PYTHONPATH=%PYTHONPATH%;%{}_HOME%{}'.format(
                 self.component_name.upper(),
+                'python' if self.explicit_python_subfolder else ''
             ))
         if self.path_qvws_git:
             _code.append('SET {}_GIT_QVW_PATH={}{}'.format(

@@ -35,7 +35,17 @@
                 },
                 "primary_signer": {
                     "description": "Primary signer for this product component release; likely one of the primary authors as well.",
-                    "$ref" : "#/definitions/authorized_qrm_signers"
+                    "oneOf": [
+                        {
+                            "$ref" : "#/definitions/authorized_qrm_signers"
+                        },
+                        {
+                            "type": "string",
+                            "enum": [
+                                "Cloud First Release - Find Primary Signer in QRM documentation home"
+                            ]
+                        }
+                    ]
                 },
                 "peer_reviewer": {
                     "description": "Peer Reviewer for this product component release.",
@@ -46,7 +56,8 @@
                         {
                             "type": "string",
                             "enum": [
-                                "Risk Level 2C - Peer Review not required"
+                                "Risk Level 2C - Peer Review not required",
+                                "Cloud First Release - Find Peer Reviewer in QRM documentation home"
                             ]
                         }
                     ]
@@ -68,6 +79,10 @@
             "type": "string",
             "description": "Network path of compiled QVWs to use for development runs directly from git.",
             "minLength": 12
+        },
+        "explicit_python_subfolder": {
+            "type": "boolean",
+            "description": "Does this solution have an explicit python subfolder for its python library"
         }
     },
     "additionalProperties" : false,
