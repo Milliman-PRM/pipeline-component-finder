@@ -12,8 +12,7 @@ This repository will follow [GitHub Flow](https://guides.github.com/introduction
 
 ## Usage / Result Promotion
 
-This pipeline component finder can be executed by submitting a job to Jenkins.  Simply go to this job on [jenkins]
-(https://indy-jenkins.milliman.com/job/PRM_Pipeline_ENV_Generator/) and build a new release.  This will create and deploy a new pipeline_components_env file to the network.
+This pipeline component finder can be executed by submitting a job to Jenkins.  Simply go to this job on [jenkins](https://indy-jenkins.milliman.com/job/PRM_Pipeline_ENV_Generator/) and build a new release.  This will create and deploy a new pipeline_components_env file to the network.
 
 ## Legacy instructions 
 This pipeline component finder needs to be manually executed.  It should be ran after promoting a new release of any pipeline component.  Only staff with appropriate network access (to the promotion location below) can promote the results of this tool.
