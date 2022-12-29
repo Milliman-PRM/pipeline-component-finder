@@ -195,6 +195,7 @@ class Release():
             self.url_git_repo,
         ))
         if not base_env: # `base_env.bat` seeds %PYTHONPATH%
+            _code.append(f'SET {self.component_name.upper()}_EXPLICIT_PYTHON={self.explicit_python_subfolder}')
             _code.append('SET PYTHONPATH=%PYTHONPATH%;%{}_HOME%{}'.format(
                 self.component_name.upper(),
                 'python' if self.explicit_python_subfolder else ''
