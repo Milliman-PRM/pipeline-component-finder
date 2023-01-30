@@ -183,7 +183,7 @@ class Release():
         ))
         _code.append(')')
         _code.append('IF %{}_FROMGIT% EQU FALSE ('.format(self.component_name.upper()))
-        _code.append('  call %BASE_ENV_{1}%move_locally.bat %{0}_SOURCE% %{0}_HOME%'.format(
+        _code.append('  call %BASE_ENV_{1}%copy_directory.bat %{0}_SOURCE% %{0}_HOME%'.format(
             self.component_name.upper(),
             'SOURCE' if base_env else 'HOME',
         ))
@@ -379,8 +379,8 @@ def main(root_paths: typing.List[Path]) -> int:
         fh_out.write('if exist %LOCAL_COMPONENT_SOURCE%\project (\n')
         fh_out.write('  RD /S /Q %LOCAL_COMPONENT_SOURCE%\project\n')
         fh_out.write(')\n\n')
-        fh_out.write('if exist "%~dp001_Programs\\" (\n')
-        fh_out.write('  call %BASE_ENV_HOME%move_locally.bat %~dp001_Programs\\ %LOCAL_COMPONENT_SOURCE%\project\\\n')
+        fh_out.write('if exist "%~dp0\\01_Programs\\" (\n')
+        fh_out.write('  call %BASE_ENV_HOME%copy_directory.bat %~dp0\\01_Programs\\ %LOCAL_COMPONENT_SOURCE%\project\\\n')
         fh_out.write(')\n')
         fh_out.write(BATCH_LOGGER_PREFIX + ': Finished copying any client-specific programs.\n')
 
