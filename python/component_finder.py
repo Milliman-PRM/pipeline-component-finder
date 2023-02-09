@@ -162,7 +162,12 @@ class Release():
                 'SET PRM_COMPONENTS=%PRM_COMPONENTS%;{}'.format(self.component_name.upper())
             )
         _code.append('IF %{}_FROMGIT% EQU FALSE ('.format(self.component_name.upper()))
-        _code.append('  SET {0}_HOME={1}{2}%{0}_VERSION%{2}'.format(
+        _code.append('  SET {0}_SOURCE={1}{2}%{0}_VERSION%{2}'.format(
+            self.component_name.upper(),
+            self.path.parent,
+            os.path.sep,
+        ))
+        _code.append('  SET {0}_HOME=%LOCAL_COMPONENT_SOURCE%{2}{0}{2}%{0}_VERSION%{2}'.format(
             self.component_name.upper(),
             self.path.parent,
             os.path.sep,
@@ -177,7 +182,12 @@ class Release():
             self.component_name.upper(),
         ))
         _code.append(')')
-
+        _code.append('IF %{}_FROMGIT% EQU FALSE ('.format(self.component_name.upper()))
+        _code.append('  call %BASE_ENV_{1}%copy_directory.bat %{0}_SOURCE% %{0}_HOME%'.format(
+            self.component_name.upper(),
+            'SOURCE' if base_env else 'HOME',
+        ))
+        _code.append(')')
         if not base_env:
             _code.append('IF %{}_FROMGIT% EQU FALSE ('.format(self.component_name.upper()))
             _code.append('  SET {0}_PATHREF=%{0}_HOME%_compiled_reference_data{1}'.format(
@@ -195,6 +205,7 @@ class Release():
             self.url_git_repo,
         ))
         if not base_env: # `base_env.bat` seeds %PYTHONPATH%
+            _code.append(f'SET {self.component_name.upper()}_EXPLICIT_PYTHON={self.explicit_python_subfolder}')
             _code.append('SET PYTHONPATH=%PYTHONPATH%;%{}_HOME%{}'.format(
                 self.component_name.upper(),
                 'python' if self.explicit_python_subfolder else ''
@@ -331,6 +342,9 @@ def main(root_paths: typing.List[Path]) -> int:
         fh_out.write(BATCH_LOGGER_PREFIX + ': Setting up full pipeline environment.\n')
         fh_out.write(BATCH_LOGGER_PREFIX + ': Running from %~f0\n\n\n')
 
+        fh_out.write('SET LOCAL_COMPONENT_SOURCE=%UserProfile%\prm_local\components\n')
+        fh_out.write('IF not exist %LOCAL_COMPONENT_SOURCE% mkdir %LOCAL_COMPONENT_SOURCE%\n\n')
+
         base_env_release = components_ordered.pop('base_env')
         LOGGER.info('Beginning special treatment of %s', base_env_release)
         for line in base_env_release.generate_setup_env_code(base_env=True):
@@ -359,6 +373,16 @@ def main(root_paths: typing.List[Path]) -> int:
         fh_out.write('  call "%~dp0\\01_Programs\\client_env.bat" (\n')
         fh_out.write(')\n')
         fh_out.write(BATCH_LOGGER_PREFIX + ': Finished running any client-specific environment scripts.\n\n\n')
+
+        LOGGER.info('Copying client-specific programs locally')
+        fh_out.write('rem Copying client-specific programs locally\n')
+        fh_out.write('if exist %LOCAL_COMPONENT_SOURCE%\project (\n')
+        fh_out.write('  RD /S /Q %LOCAL_COMPONENT_SOURCE%\project\n')
+        fh_out.write(')\n\n')
+        fh_out.write('if exist "%~dp0\\01_Programs\\" (\n')
+        fh_out.write('  call %BASE_ENV_HOME%copy_directory.bat %~dp0\\01_Programs\\ %LOCAL_COMPONENT_SOURCE%\project\\\n')
+        fh_out.write(')\n')
+        fh_out.write(BATCH_LOGGER_PREFIX + ': Finished copying any client-specific programs.\n')
 
         fh_out.write(BATCH_LOGGER_PREFIX + ': Finished setting up full pipeline environment.\n\n')
         fh_out.write('GOTO :eof\n\n\n')
